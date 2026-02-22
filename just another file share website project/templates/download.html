@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Download {{ file.original_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="logo">FS</div>
+          <div>
+            <div class="title">Free File Share</div>
+            <div class="subtitle">Download or upload files — no account required</div>
+          </div>
+        </div>
+        <div>
+          <a class="btn" href="/">Home</a>
+        </div>
+      </header>
+
+      <div class="card" style="margin-top:10px">
+        <h4>{{ file.original_name }}</h4>
+        <div class="meta">{{ file.size_human }} · uploaded {{ file.uploaded_at }}</div>
+        <div style="margin-top:12px">
+          <a class="btn" href="{{ url_for('download', file_id=file.id) }}">Download</a>
+        </div>
+      </div>
+
+      
+
+      <footer>
+        <div style="text-align:center;color:var(--muted);margin:12px 0">Files deleted after 7 days of no downloads</div>
+      </footer>
+    </div>
+
+    
+  </body>
+</html>

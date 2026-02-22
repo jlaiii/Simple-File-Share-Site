@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Free File Share</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="logo">FS</div>
+          <div>
+            <div class="title">Free File Share</div>
+            <div class="subtitle">Upload files and get a shareable link — no account required</div>
+          </div>
+        </div>
+        <div>
+          <a class="btn" href="/">Home</a>
+        </div>
+      </header>
+
+      <section class="cards">
+        <div class="card">
+          <h4>Stored</h4>
+          <div class="big">{{ human(used) }}</div>
+        </div>
+        <div class="card">
+          <h4>Total</h4>
+          <div class="big">{{ human(total) }}</div>
+        </div>
+        <div class="card">
+          <h4>Free</h4>
+          <div class="big">{{ human(free) }}</div>
+        </div>
+        <div class="card">
+          <h4>Files</h4>
+          <div class="big">{{ files_count }}</div>
+        </div>
+        <div class="card">
+          <h4>30-day Uptime</h4>
+          <div class="big">{% if uptime_30d is not none %}{{ uptime_30d }}%{% else %}N/A{% endif %}</div>
+        </div>
+      </section>
+
+      <section class="drop" id="dropzone">
+        <div style="font-weight:700">Drag & drop files here, or click to select files</div>
+        <div style="color:var(--muted);margin-top:6px">Max file size: 1 GB</div>
+        <input id="file" type="file" name="file" style="display:none" />
+        <div class="progress" id="progress" style="display:none"><i></i></div>
+      </section>
+
+      <div id="uploadResult" style="margin-top:8px;color:var(--muted)"></div>
+
+      <!-- recent uploads removed per configuration -->
+
+      <footer>
+        <div style="text-align:center;color:var(--muted);margin:12px 0">Files deleted after 7 days of no downloads</div>
+      </footer>
+    </div>
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('file');
+      const uploadResult = document.getElementById('uploadResult');
+      const progressWrap = document.getElementById('progress');
+      const progressBar = progressWrap.querySelector('i');
+
+      dropzone.addEventListener('click', (e) => {
+        // if user clicked a link inside the dropzone (upload result), don't open file picker
+        if (e.target && e.target.closest && e.target.closest('a')) return;
+        fileInput.click();
+      });
+      dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+      dropzone.addEventListener('dragleave', e => { dropzone.classList.remove('drag'); });
+      dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) uploadFile(f); });
+      fileInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) uploadFile(f); });
+
+      function uploadFile(file){
+        uploadResult.textContent = 'Uploading ' + file.name + ' ...';
+        progressWrap.style.display = 'block'; progressBar.style.width = '0%';
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.onprogress = function(e){ if (e.lengthComputable) progressBar.style.width = Math.round(e.loaded / e.total * 100) + '%'; };
+        xhr.onload = function(){
+          try{
+            const d = JSON.parse(xhr.responseText);
+            const page = d.page_url || ('/f/' + (d.id || ''));
+            if (d.id) uploadResult.innerHTML = 'Uploaded: <a href="'+page+'" target="_blank" rel="noopener">Open download page</a>';
+            else uploadResult.textContent = d.error || 'Upload failed';
+          }catch(e){ uploadResult.textContent = 'Upload failed'; }
+          progressBar.style.width='100%';
+        };
+        const fd = new FormData(); fd.append('file', file);
+        xhr.send(fd);
+      }
+    </script>
+  </body>
+</html>
